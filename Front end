@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Task Manager</title>
+    <style>
+        body { font-family: Arial; max-width: 500px; margin: auto; }
+        input, button { padding: 8px; margin: 5px; width: 100%; }
+        .task { border: 1px solid #ccc; padding: 10px; margin: 5px 0; }
+    </style>
+</head>
+<body>
+<h2>Task Manager</h2>
+<input type="text" id="title" placeholder="Task Title">
+<input type="text" id="description" placeholder="Description">
+<button onclick="addTask()">Add Task</button>
+<div id="tasks"></div>
+<script>
+const API = "http://localhost:5000/api/tasks";
+async function fetchTasks() {
+    const res = await fetch(API);
+    const data = await res.json();
+    document.getElementById("tasks").innerHTML = data.map(task =>
+        `<div class="task">
+            <b>${task.title}</b><br>
+            ${task.description}<br>
+            ${task.status}
+            <button onclick="deleteTask('${task._id}')">Delete</button>
+        </div>`
+    ).join("");
+}
+async function addTask() {
+    const title = document.getElementById("title").value;
+    const description = document.getElementById("description").value;
+    await fetch(API, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ title, description })
+    });
+    fetchTasks();
+}
+async function deleteTask(id) {
+    await fetch(API + "/" + id, { method: "DELETE" });
+    fetchTasks();
+}
+fetchTasks();
+</script>
+</body>
+</html>
+node server.js
