@@ -1,0 +1,70 @@
+npm init -y
+npm install express mongoose bcryptjs jsonwebtoken cors
+const express = require("express");
+const mongoose = require("mongoose");
+const cors = require("cors");
+const app = express();
+app.use(express.json());
+app.use(cors());
+mongoose.connect("mongodb://127.0.0.1:27017/taskmanager")
+.then(() => console.log("MongoDB Connected"))
+.catch(err => console.log(err));
+app.use("/api/auth", require("./routes/auth"));
+app.use("/api/tasks", require("./routes/tasks"));
+app.listen(5000, () => console.log("Server running on port 5000"));
+const mongoose = require("mongoose");
+const UserSchema = new mongoose.Schema({
+    name: String,
+    email: String,
+    password: String
+});
+module.exports = mongoose.model("User", UserSchema);
+const mongoose = require("mongoose");
+const TaskSchema = new mongoose.Schema({
+    title: String,
+    description: String,
+    status: { type: String, default: "Pending" },
+    userId: String
+});
+module.exports = mongoose.model("Task", TaskSchema);
+const router = require("express").Router();
+const User = require("../models/User");
+const bcrypt = require("bcryptjs");
+const jwt = require("jsonwebtoken");
+router.post("/register", async (req, res) => {
+    const { name, email, password } = req.body;
+    const hashed = await bcrypt.hash(password, 10);
+    const user = new User({ name, email, password: hashed });
+    await user.save();
+    res.json({ message: "User Registered" });
+});
+router.post("/login", async (req, res) => {
+    const { email, password } = req.body;
+    const user = await User.findOne({ email });
+    if (!user) return res.status(400).json({ message: "User not found" });
+    const isMatch = await bcrypt.compare(password, user.password);
+    if (!isMatch) return res.status(400).json({ message: "Invalid password" });
+    const token = jwt.sign({ id: user._id }, "secretkey");
+    res.json({ token });
+});
+module.exports = router;
+const router = require("express").Router();
+const Task = require("../models/Task");
+router.post("/", async (req, res) => {
+    const task = new Task(req.body);
+    await task.save();
+    res.json(task);
+});
+router.get("/", async (req, res) => {
+    const tasks = await Task.find();
+    res.json(tasks);
+});
+router.put("/:id", async (req, res) => {
+    const task = await Task.findByIdAndUpdate(req.params.id, req.body, { new: true });
+    res.json(task);
+});
+router.delete("/:id", async (req, res) => {
+    await Task.findByIdAndDelete(req.params.id);
+    res.json({ message: "Task deleted" });
+});
+module.exports = router;
