@@ -1,6 +1,6 @@
 # Task-management-application-
 A full-stack Task Management Web Application that allows users to register, log in, and manage their daily tasks efficiently.
-## 🚀 Features
+## Features
 - 🔐 User Authentication (Register & Login)
 - ➕ Create Tasks
 - 📋 View Tasks
